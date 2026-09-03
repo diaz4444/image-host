@@ -298,7 +298,10 @@
         const sourceWidth = image.width || image.naturalWidth;
         const sourceHeight = image.height || image.naturalHeight;
         const sourceSide = Math.max(sourceWidth, sourceHeight);
-        if (sourceSide > MAX_ENHANCED_SIDE) return file;
+        if (sourceSide > MAX_ENHANCED_SIDE) {
+          if (typeof image.close === 'function') image.close();
+          return file;
+        }
         const scale = Math.min(2, MAX_ENHANCED_SIDE / sourceSide);
         const width = Math.max(1, Math.round(sourceWidth * scale));
         const height = Math.max(1, Math.round(sourceHeight * scale));
