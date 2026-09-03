@@ -202,7 +202,11 @@
         const response = await fetch(`${API_ROOT}${path}`, { ...options, headers });
         let body = null;
         try { body = await response.json(); } catch { body = {}; }
-        if (!response.ok) throw new Error(body.message || `GitHub API 错误（${response.status}）`);
+        if (!response.ok) {
+          const error = new Error(body.message || `GitHub API 错误（${response.status}）`);
+          error.status = response.status;
+          throw error;
+        }
         return body;
       }
 
@@ -261,23 +265,43 @@
         return btoa(binary);
       }
 
-      async function uploadFile(file, existingSha) {
+      async function getRemoteFile(path) {
+        try { return await githubFetch(`/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(BRANCH)}`); }
+        catch (error) {
+          if (error.status === 404) return null;
+          throw error;
+        }
+      }
+
+      function isShaError(error) {
+        return error.status === 409 || (error.status === 422 && /sha/i.test(error.message));
+      }
+
+      async function uploadFile(file) {
         if (!getToken()) { tokenInput.focus(); throw new Error('请先保存 GitHub Token'); }
         const content = bytesToBase64(await file.arrayBuffer());
-        const body = { message: `${existingSha ? 'Update' : 'Upload'} ${file.name}`, content, branch: BRANCH };
-        if (existingSha) body.sha = existingSha;
-        await githubFetch(`/contents/${encodeURIComponent(file.name)}`, { method: 'PUT', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } });
+        let existing = await getRemoteFile(file.name);
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+          const body = { message: `${existing ? 'Update' : 'Upload'} ${file.name}`, content, branch: BRANCH };
+          if (existing?.sha) body.sha = existing.sha;
+          try {
+            await githubFetch(`/contents/${encodeURIComponent(file.name)}`, { method: 'PUT', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } });
+            return;
+          } catch (error) {
+            if (!isShaError(error) || attempt === 1) throw error;
+            existing = await getRemoteFile(file.name);
+          }
+        }
       }
 
       async function uploadFiles(selectedFiles) {
         if (!selectedFiles.length) return;
         if (!getToken()) { setStatus('请先在上方保存 GitHub Token。', 'error'); tokenInput.focus(); return; }
-        const existingByName = new Map(files.map((file) => [file.name, file.sha]));
         try {
           for (let index = 0; index < selectedFiles.length; index += 1) {
             const file = selectedFiles[index];
             setStatus(`正在上传 ${index + 1}/${selectedFiles.length}：${file.name}`);
-            await uploadFile(file, existingByName.get(file.name));
+            await uploadFile(file);
           }
           setStatus(`上传完成，共 ${selectedFiles.length} 个文件。`, 'ok');
           showToast('文件已上传到 GitHub');
@@ -295,7 +319,10 @@
         if (!getToken()) { tokenInput.focus(); showToast('请先保存 GitHub Token'); return; }
         if (!window.confirm(`确定删除 ${path} 吗？`)) return;
         try {
-          await githubFetch(`/contents/${encodeURIComponent(path)}`, { method: 'DELETE', body: JSON.stringify({ message: `Delete ${path}`, sha, branch: BRANCH }), headers: { 'Content-Type': 'application/json' } });
+          const current = await getRemoteFile(path);
+          const latestSha = current?.sha || sha;
+          if (!latestSha) throw new Error('无法获取文件版本信息，请刷新图库后重试。');
+          await githubFetch(`/contents/${encodeURIComponent(path)}`, { method: 'DELETE', body: JSON.stringify({ message: `Delete ${path}`, sha: latestSha, branch: BRANCH }), headers: { 'Content-Type': 'application/json' } });
           showToast('文件已删除');
           await loadGallery();
         } catch (error) { showToast(`删除失败：${error.message}`); }
