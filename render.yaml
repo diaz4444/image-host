@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: image-shelf
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    envVars:
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: ADMIN_TOKEN
+        sync: false
+    disk:
+      name: image-uploads
+      mountPath: /app/uploads
+      sizeGB: 1

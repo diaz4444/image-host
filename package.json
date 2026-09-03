@@ -1,0 +1,13 @@
+{
+  "name": "local-image-host",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A dependency-free local image host with PNG conversion in the browser.",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
