@@ -11,7 +11,7 @@
 1. 打开公网地址。
 2. 在页面顶部填入 GitHub Personal Access Token，并点击“保存 Token”。Token 只保存在当前浏览器的 `localStorage`，不会写入仓库代码。
 3. Token 需要对本仓库有 `Contents: Read and write` 权限。不要把 Token 发给任何人。
-4. 选择或拖入图片/音频。上传后可复制 GitHub 原始文件直链，这个地址不依赖 Pages 部署完成，手机打开更稳定。
+4. 选择或拖入图片/音频。默认会在浏览器本地将常见静态图片最高放大 2 倍并轻度锐化，增强结果以 PNG 上传；可在上传区关闭增强。上传后可复制 GitHub 原始文件直链，这个地址不依赖 Pages 部署完成，手机打开更稳定。
 
 图片直链格式：
 
