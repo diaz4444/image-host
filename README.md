@@ -11,13 +11,15 @@
 1. 打开公网地址。
 2. 在页面顶部填入 GitHub Personal Access Token，并点击“保存 Token”。Token 只保存在当前浏览器的 `localStorage`，不会写入仓库代码。
 3. Token 需要对本仓库有 `Contents: Read and write` 权限。不要把 Token 发给任何人。
-4. 选择或拖入图片/音频。上传后可复制 GitHub Pages 直链。
+4. 选择或拖入图片/音频。上传后可复制 GitHub 原始文件直链，这个地址不依赖 Pages 部署完成，手机打开更稳定。
 
 图片直链格式：
 
 ```text
-https://diaz4444.github.io/image-host/文件名
+https://raw.githubusercontent.com/diaz4444/image-host/main/文件名
 ```
+
+图床页面地址仍然是：<https://diaz4444.github.io/image-host/>。新上传文件需要等 Pages 发布后才能使用 Pages 文件地址，因此页面生成的文件链接使用上面的原始文件地址。
 
 也可以使用 jsDelivr CDN：
 

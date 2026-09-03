@@ -191,8 +191,7 @@
       function showToast(message) { toast.textContent = message; toast.classList.add('visible'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('visible'), 2800); }
       function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])); }
       function extension(name) { return name.includes('.') ? name.split('.').pop().toLowerCase() : ''; }
-      function pageUrl(name) { return PAGE_ROOT + encodeURIComponent(name); }
-      function rawUrl(name) { return `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${encodeURIComponent(name)}`; }
+      function rawUrl(name, version = '') { return `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${encodeURIComponent(name)}${version ? `?v=${encodeURIComponent(version)}` : ''}`; }
       function formatSize(bytes) { if (!bytes) return 'GitHub 文件'; if (bytes < 1024) return `${bytes} B`; if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`; return `${(bytes / 1024 / 1024).toFixed(1)} MB`; }
 
       async function githubFetch(path, options = {}) {
@@ -230,8 +229,8 @@
           const ext = extension(file.name);
           const isImage = IMAGE_EXTENSIONS.has(ext);
           const isAudio = AUDIO_EXTENSIONS.has(ext);
-          const link = pageUrl(file.name);
-          const preview = isImage ? `<img src="${rawUrl(file.name)}" alt="${escapeHtml(file.name)}" loading="lazy" />` : isAudio ? `<div><div class="audio-placeholder">${icon('audio')}</div><audio controls preload="none" src="${rawUrl(file.name)}"></audio></div>` : '<span>不支持预览</span>';
+          const link = rawUrl(file.name, file.sha);
+          const preview = isImage ? `<img src="${rawUrl(file.name, file.sha)}" alt="${escapeHtml(file.name)}" loading="lazy" />` : isAudio ? `<div><div class="audio-placeholder">${icon('audio')}</div><audio controls preload="none" src="${rawUrl(file.name, file.sha)}"></audio></div>` : '<span>不支持预览</span>';
           return `<article class="file-card" style="animation-delay:${index * 35}ms">
             <div class="preview">${preview}</div>
             <div class="file-body">
