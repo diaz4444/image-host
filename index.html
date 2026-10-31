@@ -183,6 +183,7 @@
       const BRANCH = 'main';
       const API_ROOT = `https://api.github.com/repos/${OWNER}/${REPO}`;
       const PAGE_ROOT = `https://${OWNER}.github.io/${REPO}/`;
+      const STATIC_GALLERY_URL = `${PAGE_ROOT}gallery.json`;
       const MEDIA_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico', 'mp3', 'wav', 'm4a', 'ogg', 'flac', 'aac']);
       const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico']);
       const AUDIO_EXTENSIONS = new Set(['mp3', 'wav', 'm4a', 'ogg', 'flac', 'aac']);
@@ -267,10 +268,19 @@
           const result = await githubFetch(`/contents/?ref=${encodeURIComponent(BRANCH)}`);
           files = Array.isArray(result) ? result.filter((file) => file.type === 'file' && MEDIA_EXTENSIONS.has(extension(file.name))) : [];
           renderGallery();
-        } catch (error) {
-          files = [];
-          gallery.innerHTML = `<div class="empty">读取失败：${escapeHtml(error.message)}<br />请确认仓库已公开，或稍后刷新。</div>`;
-          libraryCount.textContent = '读取失败';
+        } catch (apiError) {
+          try {
+            const response = await fetch(`${STATIC_GALLERY_URL}?_cacheBust=${Date.now()}`, { cache: 'no-store' });
+            if (!response.ok) throw new Error(`静态清单 HTTP ${response.status}`);
+            const fallback = await response.json();
+            files = Array.isArray(fallback.files) ? fallback.files.filter((file) => file.type === 'file' && MEDIA_EXTENSIONS.has(extension(file.name))) : [];
+            renderGallery();
+            showToast('GitHub API 暂不可用，已显示静态图库');
+          } catch (fallbackError) {
+            files = [];
+            gallery.innerHTML = `<div class="empty">读取失败：${escapeHtml(apiError.message)}<br />备用图库也无法访问，请检查网络后刷新。</div>`;
+            libraryCount.textContent = '读取失败';
+          }
         }
       }
 
