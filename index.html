@@ -216,10 +216,6 @@
         const requestPath = method === 'GET'
           ? `${path}${path.includes('?') ? '&' : '?'}_cacheBust=${Date.now()}`
           : path;
-        if (method === 'GET') {
-          headers['Cache-Control'] = 'no-cache, no-store';
-          headers.Pragma = 'no-cache';
-        }
         const response = await fetch(`${API_ROOT}${requestPath}`, { ...options, method, cache: method === 'GET' ? 'no-store' : options.cache, headers });
         let body = null;
         try { body = await response.json(); } catch { body = {}; }
