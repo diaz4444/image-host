@@ -209,10 +209,18 @@
       function formatSize(bytes) { if (!bytes) return 'GitHub 文件'; if (bytes < 1024) return `${bytes} B`; if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`; return `${(bytes / 1024 / 1024).toFixed(1)} MB`; }
 
       async function githubFetch(path, options = {}) {
+        const method = String(options.method || 'GET').toUpperCase();
         const headers = { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', ...(options.headers || {}) };
         const token = getToken();
         if (token) headers.Authorization = `Bearer ${token}`;
-        const response = await fetch(`${API_ROOT}${path}`, { ...options, headers });
+        const requestPath = method === 'GET'
+          ? `${path}${path.includes('?') ? '&' : '?'}_cacheBust=${Date.now()}`
+          : path;
+        if (method === 'GET') {
+          headers['Cache-Control'] = 'no-cache, no-store';
+          headers.Pragma = 'no-cache';
+        }
+        const response = await fetch(`${API_ROOT}${requestPath}`, { ...options, method, cache: method === 'GET' ? 'no-store' : options.cache, headers });
         let body = null;
         try { body = await response.json(); } catch { body = {}; }
         if (!response.ok) {
